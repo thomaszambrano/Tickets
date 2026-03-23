@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear reserva — {{ evento.nombre }}{% endblock %}
+
+{% block content %}
+<h1>Reservar: {{ evento.nombre }}</h1>
+<p>📅 {{ evento.fecha }} — 📍 {{ evento.lugar.nombre }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Confirmar reserva</button>
+    <a href="{% url 'detalle_evento' evento.id %}" style="margin-left:10px;">Cancelar</a>
+</form>
+{% endblock %}

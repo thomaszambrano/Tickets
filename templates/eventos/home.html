@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio - Eventos disponibles{% endblock %}
+
+{% block content %}
+<h1>Eventos disponibles</h1>
+
+{% for evento in eventos %}
+    <div style="border:1px solid #ccc; padding:15px; margin-bottom:10px; border-radius:6px;">
+        <h3><a href="{% url 'detalle_evento' evento.id %}">{{ evento.nombre }}</a></h3>
+        <p>📅 {{ evento.fecha }} — 🕐 {{ evento.hora }}</p>
+        <p>📍 {{ evento.lugar.nombre }}, {{ evento.lugar.ciudad }}</p>
+        <p>🏷️ {{ evento.categoria.nombre }}</p>
+    </div>
+{% empty %}
+    <p>No hay eventos registrados aún.</p>
+{% endfor %}
+{% endblock %}
