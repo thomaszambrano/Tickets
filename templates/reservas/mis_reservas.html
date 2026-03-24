@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis reservas{% endblock %}
+
+{% block content %}
+<h1>Mis reservas</h1>
+
+{% for reserva in reservas %}
+    <div style="border:1px solid #ccc; padding:15px; margin-bottom:10px; border-radius:6px;">
+        <p><strong>Evento:</strong> {{ reserva.evento.nombre }}</p>
+        <p><strong>Tipo de ticket:</strong> {{ reserva.tipo_ticket.nombre }}</p>
+        <p><strong>Cantidad:</strong> {{ reserva.cantidad }}</p>
+        <p><strong>Estado:</strong> {{ reserva.get_estado_display }}</p>
+        <p><strong>Fecha de reserva:</strong> {{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</p>
+        {% if reserva.estado == 'pendiente' %}
+            <a href="{% url 'cancelar_reserva' reserva.id %}">Cancelar</a>
+        {% endif %}
+    </div>
+{% empty %}
+    <p>No tienes reservas todavía. <a href="{% url 'home' %}">Ver eventos disponibles</a>.</p>
+{% endfor %}
+{% endblock %}
