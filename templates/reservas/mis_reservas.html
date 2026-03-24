@@ -1,21 +1,47 @@
 {% extends 'base.html' %}
-
 {% block title %}Mis reservas{% endblock %}
 
 {% block content %}
 <h1>Mis reservas</h1>
 
 {% for reserva in reservas %}
-    <div style="border:1px solid #ccc; padding:15px; margin-bottom:10px; border-radius:6px;">
-        <p><strong>Evento:</strong> {{ reserva.evento.nombre }}</p>
-        <p><strong>Tipo de ticket:</strong> {{ reserva.tipo_ticket.nombre }}</p>
-        <p><strong>Cantidad:</strong> {{ reserva.cantidad }}</p>
-        <p><strong>Estado:</strong> {{ reserva.get_estado_display }}</p>
-        <p><strong>Fecha de reserva:</strong> {{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</p>
-        {% if reserva.estado == 'pendiente' %}
-            <a href="{% url 'cancelar_reserva' reserva.id %}">Cancelar</a>
-        {% endif %}
-    </div>
+<div style="border:1px solid #ccc; padding:15px; margin-bottom:14px; border-radius:6px;">
+    <p><strong>Evento:</strong> {{ reserva.evento.nombre }}</p>
+    <p><strong>Tipo de ticket:</strong> {{ reserva.tipo_ticket.nombre }}</p>
+    <p><strong>Cantidad:</strong> {{ reserva.cantidad }}</p>
+    <p><strong>Estado:</strong> {{ reserva.get_estado_display }}</p>
+    <p><strong>Fecha:</strong> {{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</p>
+
+    {% if reserva.estado == 'pendiente' %}
+        <div style="display:flex; gap:12px; margin-top:10px;">
+            <a href="{% url 'crear_pago' reserva.id %}"
+               style="background:#27ae60; color:white; padding:6px 14px; border-radius:4px; text-decoration:none;">
+                💳 Pagar
+            </a>
+            <form method="post" action="{% url 'cancelar_reserva' reserva.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit"
+                    onclick="return confirm('¿Cancelar esta reserva?')"
+                    style="background:#e74c3c; color:white; padding:6px 14px; border:none; border-radius:4px; cursor:pointer;">
+                    Cancelar
+                </button>
+            </form>
+        </div>
+    {% endif %}
+
+    {% if reserva.estado == 'confirmada' %}
+        <p style="margin-top:10px;"><strong>🎟 Tickets:</strong></p>
+        {% for ticket in reserva.tickets.all %}
+            <div style="background:#f4f4f4; padding:8px 12px; border-radius:4px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                <span>{{ ticket.codigo }}</span>
+                <a href="{% url 'descargar_ticket' ticket.id %}"
+                   style="background:#2c3e50; color:white; padding:4px 10px; border-radius:4px; text-decoration:none; font-size:13px;">
+                    ⬇ Descargar PDF
+                </a>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
 {% empty %}
     <p>No tienes reservas todavía. <a href="{% url 'home' %}">Ver eventos disponibles</a>.</p>
 {% endfor %}

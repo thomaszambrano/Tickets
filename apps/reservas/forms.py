@@ -13,10 +13,21 @@ class ReservaForm(forms.ModelForm):
     def __init__(self, *args, evento=None, **kwargs):
         super().__init__(*args, **kwargs)
         if evento:
+            self.evento = evento
             # Limitar los tipos de ticket solo al evento solicitado (DRY: filtro centralizado)
             self.fields['tipo_ticket'].queryset = TipoTicket.objects.filter(
                 evento=evento, cantidad_disponible__gt=0
             )
+        else:
+            self.evento = None
+
+    def clean_tipo_ticket(self):
+        tipo_ticket = self.cleaned_data.get('tipo_ticket')
+        if self.evento and tipo_ticket and tipo_ticket.evento_id != self.evento.id:
+            raise forms.ValidationError(
+                'El tipo de ticket seleccionado no pertenece al evento.'
+            )
+        return tipo_ticket
 
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get('cantidad')

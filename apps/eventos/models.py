@@ -15,6 +15,8 @@ class Lugar(models.Model):
     direccion = models.CharField(max_length=200)
     ciudad = models.CharField(max_length=100)
     capacidad = models.PositiveIntegerField()
+    latitud = models.FloatField(default=0.0)
+    longitud = models.FloatField(default=0.0)
 
     def __str__(self):
         return f"{self.nombre} - {self.ciudad}"
@@ -25,7 +27,10 @@ class Evento(models.Model):
     descripcion = models.TextField()
     fecha = models.DateField()
     hora = models.TimeField()
-    capacidad_total = models.PositiveIntegerField()
+    # Defaults para que Django pueda crear migraciones aunque la tabla exista con datos.
+    # Luego se reemplazan con datos reales mediante seed (SQL).
+    capacidad = models.PositiveIntegerField(default=0)
+    organizador = models.CharField(max_length=150, default='')
     imagen = models.ImageField(upload_to='eventos/', blank=True, null=True)
     categoria = models.ForeignKey(CategoriaEvento, on_delete=models.CASCADE, related_name='eventos')
     lugar = models.ForeignKey(Lugar, on_delete=models.CASCADE, related_name='eventos')
@@ -41,4 +46,4 @@ class TipoTicket(models.Model):
     cantidad_disponible = models.PositiveIntegerField()
 
     def __str__(self):
-        return f"{self.nombre} - {self.evento.nombre}"
+        return f"{self.nombre} — {self.evento.nombre}"

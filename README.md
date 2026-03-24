@@ -124,6 +124,7 @@ Tickets/
 | Método | URL | Nombre | Acceso | Descripción |
 | :--- | :--- | :--- | :--- | :--- |
 | GET | `/` | `home` | Público | Lista de eventos disponibles |
+| GET | `/eventos/` | `catalogo_eventos` | Público | Catálogo con filtros y paginación |
 | GET | `/evento/<id>/` | `detalle_evento` | Público | Detalle de un evento y sus tipos de ticket |
 | GET/POST | `/accounts/login/` | `login` | Público | Formulario de inicio de sesión |
 | POST | `/accounts/logout/` | `logout` | Autenticado | Cierra sesión y redirige a home |
@@ -147,21 +148,31 @@ Tickets/
     ```
 2.  **Levantar los contenedores**
     ```bash
-    docker compose up --build
+    docker compose up --build -d
     ```
 3.  **Aplicar migraciones**
     ```bash
     docker compose exec web python manage.py migrate
     ```
-4.  **Crear superusuario**
+4.  **Cargar datos de prueba (Seed SQL)**
+    El archivo `seed_datos_postgres.sql` contiene datos iniciales (categorías, lugares, eventos, tickets y usuario de prueba).
+    Ejecuta el siguiente comando en la terminal para poblar la base de datos:
+    ```bash
+    docker compose exec -T db psql -U postgres -d ticketsdb < seed_datos_postgres.sql
+    ```
+5.  **Crear superusuario** (Opcional)
     ```bash
     docker compose exec web python manage.py createsuperuser
     ```
-5.  **Acceder a la aplicación**
+6.  **Acceder a la aplicación**
     | URL | Descripción |
     | :--- | :--- |
     | http://localhost:8000/ | Aplicación principal |
     | http://localhost:8000/admin/ | Panel de administración |
+
+    **Usuario demo (Cliente para probar reservas):**
+    - Usuario: `cliente_demo`
+    - Contraseña: `1234`
 
 ---
 

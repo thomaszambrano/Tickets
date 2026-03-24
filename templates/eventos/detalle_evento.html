@@ -3,26 +3,95 @@
 {% block title %}{{ evento.nombre }}{% endblock %}
 
 {% block content %}
-<h1>{{ evento.nombre }}</h1>
-<p><strong>Categoría:</strong> {{ evento.categoria.nombre }}</p>
-<p><strong>Descripción:</strong> {{ evento.descripcion }}</p>
-<p><strong>Fecha:</strong> {{ evento.fecha }} — <strong>Hora:</strong> {{ evento.hora }}</p>
-<p><strong>Lugar:</strong> {{ evento.lugar.nombre }}, {{ evento.lugar.ciudad }}</p>
-<p><strong>Capacidad total:</strong> {{ evento.capacidad_total }}</p>
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-2">{{ evento.nombre }}</h1>
+      <p class="mb-1"><strong>Categoría:</strong> {{ evento.categoria.nombre }}</p>
+      <p class="mb-3"><strong>Descripción:</strong> {{ evento.descripcion }}</p>
 
-<h3>Tipos de ticket disponibles</h3>
-{% for tipo in evento.tipos_ticket.all %}
-    <div style="border:1px solid #ccc; padding:10px; margin-bottom:8px; border-radius:4px;">
-        <strong>{{ tipo.nombre }}</strong> — ${{ tipo.precio }} — Disponibles: {{ tipo.cantidad_disponible }}
-        {% if user.is_authenticated %}
-            <a href="{% url 'crear_reserva' evento.id %}?tipo={{ tipo.id }}" style="margin-left:10px;">Reservar</a>
-        {% endif %}
+      <p class="mb-1"><strong>Fecha:</strong> {{ evento.fecha }} — <strong>Hora:</strong> {{ evento.hora }}</p>
+      <p class="mb-1"><strong>Lugar:</strong> {{ evento.lugar.nombre }}, {{ evento.lugar.ciudad }}</p>
+      <p class="mb-3"><strong>Capacidad:</strong> {{ evento.capacidad }}</p>
+
+      {% if evento.imagen %}
+        <img
+          src="{{ evento.imagen.url }}"
+          class="img-fluid rounded mb-3"
+          alt="{{ evento.nombre }}"
+          style="max-height: 320px; object-fit: cover;"
+        >
+      {% endif %}
     </div>
-{% empty %}
-    <p>No hay tipos de ticket configurados.</p>
-{% endfor %}
+  </div>
 
-{% if not user.is_authenticated %}
-    <p><a href="{% url 'login' %}">Inicia sesión para reservar</a></p>
-{% endif %}
+  <hr class="my-4">
+
+  <div class="row align-items-start">
+    <div class="col-12 col-lg-5">
+      <h3 class="mb-3">Reservar tickets</h3>
+
+      {% if user.is_authenticated %}
+        <form method="get" action="{% url 'crear_reserva' evento.id %}" class="row g-2">
+          <div class="col-12">
+            <label class="form-label" for="tipo">Tipo de ticket</label>
+            <select id="tipo" name="tipo" class="form-select">
+              {% for tipo in evento.tipos_ticket.all %}
+                <option value="{{ tipo.id }}">
+                  {{ tipo.nombre }} - ${{ tipo.precio }} ({{ tipo.cantidad_disponible }} disponibles)
+                </option>
+              {% empty %}
+                <option value="">No hay tipos configurados</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary w-100">Reservar</button>
+          </div>
+        </form>
+      {% else %}
+        <div class="alert alert-info">
+          <a href="{% url 'login' %}">Inicia sesión</a> para reservar.
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <h3 class="mb-3">Tipos de ticket disponibles</h3>
+
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Precio</th>
+              <th>Disponibles</th>
+              <th class="text-end">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tipo in evento.tipos_ticket.all %}
+              <tr>
+                <td>{{ tipo.nombre }}</td>
+                <td>${{ tipo.precio }}</td>
+                <td>{{ tipo.cantidad_disponible }}</td>
+                <td class="text-end">
+                  {% if user.is_authenticated %}
+                    <a class="btn btn-success btn-sm" href="{% url 'crear_reserva' evento.id %}?tipo={{ tipo.id }}">Reservar</a>
+                  {% else %}
+                    <a class="btn btn-outline-primary btn-sm" href="{% url 'login' %}">Reservar</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4">No hay tipos de ticket configurados.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -11,9 +11,12 @@ from .forms import ReservaForm
 
 @login_required
 def mis_reservas(request):
-    reservas = Reserva.objects.filter(
-        usuario=request.user
-    ).select_related('evento', 'tipo_ticket').order_by('-fecha_reserva')
+    reservas = (
+        Reserva.objects.filter(usuario=request.user)
+        .exclude(estado='cancelada')
+        .select_related('evento', 'tipo_ticket')
+        .order_by('-fecha_reserva')
+    )
     return render(request, 'reservas/mis_reservas.html', {'reservas': reservas})
 
 

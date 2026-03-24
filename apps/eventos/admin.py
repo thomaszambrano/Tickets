@@ -1,7 +1,7 @@
 # Autor: Thomas Osorio
 
 from django.contrib import admin
-from .models import CategoriaEvento, Lugar, Evento, TipoTicket
+from .models import CategoriaEvento, Evento, Lugar, TipoTicket
 
 
 @admin.register(CategoriaEvento)
@@ -18,7 +18,7 @@ class LugarAdmin(admin.ModelAdmin):
 
 @admin.register(Evento)
 class EventoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'fecha', 'hora', 'lugar', 'categoria', 'capacidad_total')
+    list_display = ('nombre', 'fecha', 'hora', 'lugar', 'categoria', 'capacidad', 'organizador')
     list_filter = ('categoria', 'fecha')
     search_fields = ('nombre',)
 
@@ -27,3 +27,4 @@ class EventoAdmin(admin.ModelAdmin):
 class TipoTicketAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'evento', 'precio', 'cantidad_disponible')
     list_filter = ('evento',)
+    search_fields = ('nombre',)

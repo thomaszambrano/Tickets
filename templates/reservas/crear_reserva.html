@@ -1,15 +1,32 @@
 {% extends 'base.html' %}
-
 {% block title %}Crear reserva — {{ evento.nombre }}{% endblock %}
 
 {% block content %}
 <h1>Reservar: {{ evento.nombre }}</h1>
-<p>📅 {{ evento.fecha }} — 📍 {{ evento.lugar.nombre }}</p>
+<p>📅 {{ evento.fecha }} &nbsp;|&nbsp; 📍 {{ evento.lugar.nombre }}</p>
 
-<form method="post">
+<form method="post" style="max-width:480px; margin-top:20px;">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Confirmar reserva</button>
-    <a href="{% url 'detalle_evento' evento.id %}" style="margin-left:10px;">Cancelar</a>
+
+    {% for field in form %}
+        <div style="margin-bottom:14px;">
+            <label for="{{ field.id_for_label }}" style="display:block; font-weight:bold; margin-bottom:4px;">
+                {{ field.label }}
+            </label>
+            {{ field }}
+            {% if field.errors %}
+                <p style="color:red; margin:4px 0 0;">{{ field.errors|join:", " }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <div style="margin-top:20px; display:flex; gap:12px; align-items:center;">
+        <button type="submit"
+            onclick="return confirm('¿Confirmas la reserva?')"
+            style="background:#2c3e50; color:white; padding:8px 18px; border:none; border-radius:4px; cursor:pointer;">
+            Confirmar reserva
+        </button>
+        <a href="{% url 'detalle_evento' evento.id %}">Cancelar</a>
+    </div>
 </form>
 {% endblock %}
