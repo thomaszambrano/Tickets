@@ -3,6 +3,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db import transaction
 
 from apps.eventos.models import Evento
 from .models import Reserva
@@ -27,15 +28,14 @@ def crear_reserva(request, evento_id):
     if request.method == 'POST':
         form = ReservaForm(request.POST, evento=evento)
         if form.is_valid():
-            reserva = form.save(commit=False)
-            reserva.usuario = request.user
-            reserva.evento = evento
-            reserva.save()
+            with transaction.atomic():
+                reserva = form.save(commit=False)
+                reserva.usuario = request.user
+                reserva.evento = evento
+                reserva.save()
 
-            # Descontar disponibilidad del tipo de ticket
-            tipo = reserva.tipo_ticket
-            tipo.cantidad_disponible -= reserva.cantidad
-            tipo.save()
+                # Usa el método seguro que acabas de crear (adiós resta manual)
+                reserva.tipo_ticket.descontar_disponibilidad(reserva.cantidad)
 
             messages.success(request, 'Reserva creada exitosamente.')
             return redirect('mis_reservas')
@@ -55,13 +55,13 @@ def cancelar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, pk=reserva_id, usuario=request.user)
 
     if reserva.estado == 'pendiente':
-        # Devolver disponibilidad al tipo de ticket
-        tipo = reserva.tipo_ticket
-        tipo.cantidad_disponible += reserva.cantidad
-        tipo.save()
+        with transaction.atomic():
+            # Usa el método seguro para devolver (adiós suma manual)
+            reserva.tipo_ticket.restaurar_disponibilidad(reserva.cantidad)
 
-        reserva.estado = 'cancelada'
-        reserva.save()
+            reserva.estado = 'cancelada'
+            reserva.save()
+            
         messages.success(request, 'Reserva cancelada.')
     else:
         messages.warning(request, 'Solo se pueden cancelar reservas en estado pendiente.')
