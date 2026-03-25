@@ -3,16 +3,69 @@
 {% block title %}Inicio - Eventos disponibles{% endblock %}
 
 {% block content %}
-<h1>Eventos disponibles</h1>
+<div class="page-header">
+    <h1 class="page-title">Eventos disponibles</h1>
+    <p class="page-subtitle">
+        Explora los eventos registrados y consulta sus detalles antes de reservar.
+    </p>
+</div>
 
-{% for evento in eventos %}
-    <div style="border:1px solid #ccc; padding:15px; margin-bottom:10px; border-radius:6px;">
-        <h3><a href="{% url 'detalle_evento' evento.id %}">{{ evento.nombre }}</a></h3>
-        <p>📅 {{ evento.fecha }} — 🕐 {{ evento.hora }}</p>
-        <p>📍 {{ evento.lugar.nombre }}, {{ evento.lugar.ciudad }}</p>
-        <p>🏷️ {{ evento.categoria.nombre }}</p>
+{% if eventos %}
+    <div class="row g-4">
+        {% for evento in eventos %}
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="event-card">
+                    {% if evento.imagen %}
+                        <img src="{{ evento.imagen.url }}" alt="{{ evento.nombre }}">
+                    {% else %}
+                        <div class="event-placeholder">
+                            <i class="bi bi-calendar-event"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                            <h3 class="h4 mb-0">{{ evento.nombre }}</h3>
+                            <span class="category-badge">
+                                <i class="bi bi-tag-fill"></i>
+                                {{ evento.categoria.nombre }}
+                            </span>
+                        </div>
+
+                        <p class="text-secondary mb-4">
+                            {{ evento.descripcion|default:"Consulta la información completa de este evento y revisa la disponibilidad de tickets."|truncatechars:120 }}
+                        </p>
+
+                        <div class="detail-chip">
+                            <i class="bi bi-calendar3"></i>
+                            <span>{{ evento.fecha }} — {{ evento.hora }}</span>
+                        </div>
+
+                        <div class="detail-chip">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            <span>{{ evento.lugar.nombre }}, {{ evento.lugar.ciudad }}</span>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <a href="{% url 'detalle_evento' evento.id %}" class="btn btn-primary rounded-3">
+                                <i class="bi bi-eye-fill me-2"></i>
+                                Ver detalle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
     </div>
-{% empty %}
-    <p>No hay eventos registrados aún.</p>
-{% endfor %}
+{% else %}
+    <div class="empty-state">
+        <div class="mb-3 fs-1 text-primary">
+            <i class="bi bi-calendar-x"></i>
+        </div>
+        <h3 class="h4 fw-bold">No hay eventos registrados aún</h3>
+        <p class="text-secondary mb-0">
+            Cuando se creen eventos, aparecerán aquí automáticamente.
+        </p>
+    </div>
+{% endif %}
 {% endblock %}

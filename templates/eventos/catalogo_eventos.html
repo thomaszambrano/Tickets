@@ -3,120 +3,196 @@
 {% block title %}Catálogo de Eventos{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="row mb-3">
-    <div class="col-12">
-      <h1>Eventos disponibles</h1>
+<div class="page-header">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+        <div>
+            <h1 class="page-title mb-1">Catálogo de eventos</h1>
+            <p class="page-subtitle mb-0">
+                Explora, filtra y encuentra eventos según categoría, fecha o nombre.
+            </p>
+        </div>
+
+        <div>
+            <a href="{% url 'home' %}" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="bi bi-house-door-fill me-2"></i>
+                Ir al inicio
+            </a>
+        </div>
     </div>
-  </div>
+</div>
 
-  <div class="card mb-4">
-    <div class="card-body">
-      <form method="get" class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label" for="categoria">Categoría</label>
-          <select id="categoria" name="categoria" class="form-select">
-            <option value="">Todas</option>
-            {% for cat in categorias %}
-              <option value="{{ cat.id }}"{% if request.GET.categoria == cat.id|stringformat:"s" %} selected{% endif %}>
-                {{ cat.nombre }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="col-md-3">
-          <label class="form-label" for="fecha_inicio">Desde</label>
-          <input id="fecha_inicio" type="date" name="fecha_inicio" class="form-control" value="{{ request.GET.fecha_inicio }}">
-        </div>
-
-        <div class="col-md-3">
-          <label class="form-label" for="fecha_fin">Hasta</label>
-          <input id="fecha_fin" type="date" name="fecha_fin" class="form-control" value="{{ request.GET.fecha_fin }}">
-        </div>
-
-        <div class="col-md-2">
-          <label class="form-label" for="q">Buscar</label>
-          <input id="q" type="text" name="q" class="form-control" placeholder="Nombre" value="{{ request.GET.q }}">
-        </div>
-
-        <div class="col-12 d-flex gap-2">
-          <button type="submit" class="btn btn-primary">Filtrar</button>
-          <a class="btn btn-outline-secondary" href="{% url 'catalogo_eventos' %}">Limpiar</a>
-        </div>
-      </form>
+<div class="glass-card p-4 mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-funnel-fill text-primary fs-5"></i>
+        <h2 class="h4 fw-bold mb-0">Filtros de búsqueda</h2>
     </div>
-  </div>
 
-  {% if eventos %}
-    <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
-      {% for evento in eventos %}
-        <div class="col">
-          <div class="card h-100">
-            {% if evento.imagen %}
-              <img
-                src="{{ evento.imagen.url }}"
-                class="card-img-top"
-                alt="{{ evento.nombre }}"
-                style="height: 200px; object-fit: cover;"
-              >
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label fw-semibold" for="categoria">Categoría</label>
+            <select id="categoria" name="categoria" class="form-select form-select-lg rounded-3">
+                <option value="">Todas</option>
+                {% for cat in categorias %}
+                    <option value="{{ cat.id }}"{% if request.GET.categoria == cat.id|stringformat:"s" %} selected{% endif %}>
+                        {{ cat.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-12 col-md-3">
+            <label class="form-label fw-semibold" for="fecha_inicio">Desde</label>
+            <input
+                id="fecha_inicio"
+                type="date"
+                name="fecha_inicio"
+                class="form-control form-control-lg rounded-3"
+                value="{{ request.GET.fecha_inicio }}"
+            >
+        </div>
+
+        <div class="col-12 col-md-3">
+            <label class="form-label fw-semibold" for="fecha_fin">Hasta</label>
+            <input
+                id="fecha_fin"
+                type="date"
+                name="fecha_fin"
+                class="form-control form-control-lg rounded-3"
+                value="{{ request.GET.fecha_fin }}"
+            >
+        </div>
+
+        <div class="col-12 col-md-2">
+            <label class="form-label fw-semibold" for="q">Buscar</label>
+            <input
+                id="q"
+                type="text"
+                name="q"
+                class="form-control form-control-lg rounded-3"
+                placeholder="Nombre"
+                value="{{ request.GET.q }}"
+            >
+        </div>
+
+        <div class="col-12 d-flex flex-column flex-sm-row gap-2 pt-2">
+            <button type="submit" class="btn btn-primary rounded-3 px-4">
+                <i class="bi bi-search me-2"></i>
+                Filtrar
+            </button>
+
+            <a class="btn btn-outline-secondary rounded-3 px-4" href="{% url 'catalogo_eventos' %}">
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                Limpiar
+            </a>
+        </div>
+    </form>
+</div>
+
+{% if eventos %}
+    <div class="row g-4 mb-4">
+        {% for evento in eventos %}
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="event-card">
+                    {% if evento.imagen %}
+                        <img
+                            src="{{ evento.imagen.url }}"
+                            alt="{{ evento.nombre }}"
+                        >
+                    {% else %}
+                        <div class="event-placeholder">
+                            <i class="bi bi-calendar-event"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                            <h3 class="h4 mb-0">{{ evento.nombre }}</h3>
+                            <span class="category-badge">
+                                <i class="bi bi-tag-fill"></i>
+                                {{ evento.categoria.nombre }}
+                            </span>
+                        </div>
+
+                        <p class="text-secondary mb-4">
+                            {{ evento.descripcion|truncatechars:130 }}
+                        </p>
+
+                        <div class="detail-chip">
+                            <i class="bi bi-calendar3"></i>
+                            <span>{{ evento.fecha }} — {{ evento.hora }}</span>
+                        </div>
+
+                        <div class="detail-chip">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            <span>{{ evento.lugar.nombre }}, {{ evento.lugar.ciudad }}</span>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <a href="{% url 'detalle_evento' evento.id %}" class="btn btn-primary rounded-3">
+                                <i class="bi bi-eye-fill me-2"></i>
+                                Ver detalle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <div class="mb-3 fs-1 text-primary">
+            <i class="bi bi-search-heart"></i>
+        </div>
+        <h3 class="h4 fw-bold">No se encontraron eventos</h3>
+        <p class="text-secondary mb-4">
+            No hay eventos registrados con los filtros seleccionados. Intenta ajustar la búsqueda.
+        </p>
+        <a class="btn btn-outline-primary rounded-pill px-4" href="{% url 'catalogo_eventos' %}">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Limpiar filtros
+        </a>
+    </div>
+{% endif %}
+
+{% if is_paginated %}
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link rounded-start-pill px-3"
+                       href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                        <i class="bi bi-chevron-left me-1"></i>
+                        Anterior
+                    </a>
+                </li>
             {% endif %}
 
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title">{{ evento.nombre }}</h5>
-              <span class="badge bg-secondary mb-2">{{ evento.categoria.nombre }}</span>
-              <p class="card-text">{{ evento.descripcion|truncatechars:130 }}</p>
+            {% for num in paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ num }}">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
 
-              <p class="card-text mt-auto mb-2">
-                <small class="text-muted">📅 {{ evento.fecha }} — 🕐 {{ evento.hora }}</small>
-              </p>
-              <p class="card-text mb-3">
-                📍 {{ evento.lugar.nombre }}, {{ evento.lugar.ciudad }}
-              </p>
-
-              <a href="{% url 'detalle_evento' evento.id %}" class="btn btn-sm btn-primary mt-auto">
-                Ver detalle
-              </a>
-            </div>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="alert alert-info">No hay eventos registrados con los filtros seleccionados.</div>
-  {% endif %}
-
-  {% if is_paginated %}
-    <nav aria-label="Paginación">
-      <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-          <li class="page-item">
-            <a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
-              Anterior
-            </a>
-          </li>
-        {% endif %}
-
-        {% for num in paginator.page_range %}
-          {% if num == page_obj.number %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-            <li class="page-item">
-              <a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ num }}">{{ num }}</a>
-            </li>
-          {% endif %}
-        {% endfor %}
-
-        {% if page_obj.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">
-              Siguiente
-            </a>
-          </li>
-        {% endif %}
-      </ul>
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link rounded-end-pill px-3"
+                       href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">
+                        Siguiente
+                        <i class="bi bi-chevron-right ms-1"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
     </nav>
-  {% endif %}
-</div>
+{% endif %}
 {% endblock %}
 

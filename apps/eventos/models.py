@@ -1,6 +1,7 @@
 # Autor: Thomas Osorio
 
 from django.db import models
+from django.db.models import F
 
 class CategoriaEvento(models.Model):
     nombre = models.CharField(max_length=100, unique=True)

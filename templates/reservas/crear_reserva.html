@@ -2,31 +2,113 @@
 {% block title %}Crear reserva — {{ evento.nombre }}{% endblock %}
 
 {% block content %}
-<h1>Reservar: {{ evento.nombre }}</h1>
-<p>📅 {{ evento.fecha }} &nbsp;|&nbsp; 📍 {{ evento.lugar.nombre }}</p>
+<style>
+    .reservation-form-card input,
+    .reservation-form-card select,
+    .reservation-form-card textarea {
+        width: 100%;
+        padding: 0.75rem 0.95rem;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        background: #fff;
+    }
 
-<form method="post" style="max-width:480px; margin-top:20px;">
-    {% csrf_token %}
+    .reservation-form-card input:focus,
+    .reservation-form-card select:focus,
+    .reservation-form-card textarea:focus {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.12);
+    }
+</style>
 
-    {% for field in form %}
-        <div style="margin-bottom:14px;">
-            <label for="{{ field.id_for_label }}" style="display:block; font-weight:bold; margin-bottom:4px;">
-                {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.errors %}
-                <p style="color:red; margin:4px 0 0;">{{ field.errors|join:", " }}</p>
-            {% endif %}
+<div class="page-header">
+    <h1 class="page-title mb-1">Reservar tickets</h1>
+    <p class="page-subtitle">
+        Completa la información para confirmar tu reserva en el evento seleccionado.
+    </p>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-5">
+        <div class="glass-card p-4 h-100">
+            <div class="d-flex align-items-start gap-3 mb-3">
+                <div class="auth-icon mb-0" style="width: 52px; height: 52px; min-width: 52px;">
+                    <i class="bi bi-calendar-check-fill"></i>
+                </div>
+                <div>
+                    <h2 class="h4 fw-bold mb-1">{{ evento.nombre }}</h2>
+                    <p class="text-secondary mb-0">
+                        Revisa los datos principales antes de continuar.
+                    </p>
+                </div>
+            </div>
+
+            <div class="ticket-row mb-3">
+                <div class="info-label">Fecha</div>
+                <div class="fw-semibold">{{ evento.fecha }}</div>
+            </div>
+
+            <div class="ticket-row mb-3">
+                <div class="info-label">Lugar</div>
+                <div class="fw-semibold">{{ evento.lugar.nombre }}</div>
+            </div>
+
+            <div class="ticket-row">
+                <div class="info-label">Ciudad</div>
+                <div class="fw-semibold">{{ evento.lugar.ciudad }}</div>
+            </div>
         </div>
-    {% endfor %}
-
-    <div style="margin-top:20px; display:flex; gap:12px; align-items:center;">
-        <button type="submit"
-            onclick="return confirm('¿Confirmas la reserva?')"
-            style="background:#2c3e50; color:white; padding:8px 18px; border:none; border-radius:4px; cursor:pointer;">
-            Confirmar reserva
-        </button>
-        <a href="{% url 'detalle_evento' evento.id %}">Cancelar</a>
     </div>
-</form>
+
+    <div class="col-12 col-lg-7">
+        <div class="glass-card p-4 reservation-form-card">
+            <h2 class="h4 fw-bold mb-3">Formulario de reserva</h2>
+            <p class="text-secondary mb-4">
+                Selecciona las opciones disponibles y confirma tu reserva cuando estés listo.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                            {{ field.label }}
+                        </label>
+                        {{ field }}
+
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+
+                        {% if field.errors %}
+                            <div class="text-danger small mt-2">
+                                {% for error in field.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-lg rounded-3"
+                        onclick="return confirm('¿Confirmas la reserva?')">
+                        <i class="bi bi-check2-circle me-2"></i>
+                        Confirmar reserva
+                    </button>
+
+                    <a href="{% url 'detalle_evento' evento.id %}" class="btn btn-outline-secondary btn-lg rounded-3">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
