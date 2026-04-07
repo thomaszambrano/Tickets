@@ -21,6 +21,11 @@ class Reserva(models.Model):
     def __str__(self):
         return f"Reserva #{self.id} - {self.usuario.username}"
 
+    def calcular_total(self):
+        "calculamos el costo total. mas sencillo de actualizar en el caso de impuestos o descuentos"
+        return self.tipo_ticket.precio * self.cantidad
+    
+
 
 class Ticket(models.Model):
     reserva = models.ForeignKey(Reserva, on_delete=models.CASCADE, related_name='tickets')
