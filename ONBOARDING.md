@@ -1,125 +1,129 @@
-# VibePas — Onboarding Guide
+# VibePas — Guía de Incorporación
 
-> New to the project? Start here. You'll be running it locally in under 10 minutes.
+> ¿Nuevo en el proyecto? Empieza aquí. Tendrás el entorno corriendo en menos de 10 minutos.
 
-## What is VibePas?
+## ¿Qué es VibePas?
 
-A Django 4.2 web app for event management, ticket reservations, and payments. Built for a university project with PostgreSQL 15 and Docker Compose.
+Aplicación web en Django 4.2 para gestión de eventos, reservas de entradas y pagos. Proyecto académico con PostgreSQL 15 y Docker Compose.
 
-## Project state (as of May 2026)
+## Estado del proyecto (mayo 2026)
 
-### Done ✅
-| Feature | Location |
-|---------|----------|
-| Event catalog with filters (category, date, name) | `apps/eventos/` |
-| Reservation flow with atomic stock decrement | `apps/reservas/services.py` |
-| Payment processing (simulated) | `apps/pagos/services.py` |
-| Ticket generation via DIP (TicketGenerator ABC) | `apps/reservas/ticket_generator.py` |
-| User registration + login | `apps/usuarios/` |
-| i18n: Spanish + English language switcher | `locale/`, `templates/partials/language_switcher.html` |
-| 6 unit tests | `apps/reservas/tests.py` |
-| Architecture documentation (Mermaid) | `docs/ARCHITECTURE.md` |
-| Docker Compose with healthchecks | `docker-compose.yml` |
+### Implementado ✅
 
-### Pending ❌ (GitHub Issues open)
-| Feature | Issue |
-|---------|-------|
-| Cloud deployment (Railway/Render) | #1 |
-| Compile .mo files for i18n | #2 |
-| QR ticket generation | #3 |
-| Custom 404/500 pages | #4 |
-| Email confirmations (SMTP) | #5 |
-| 80%+ test coverage | #7 |
-| SEO + robots.txt | #8 |
+| Funcionalidad | Ubicación |
+|---------------|-----------|
+| Catálogo de eventos con filtros (categoría, fecha, nombre) | `apps/eventos/` |
+| Reservas con decremento atómico de stock | `apps/reservas/services.py` |
+| Procesamiento de pagos (simulado) | `apps/pagos/services.py` |
+| Generación de tickets vía DIP (TicketGenerator ABC) | `apps/reservas/ticket_generator.py` |
+| Descarga de ticket en PDF (reportlab) | `apps/pagos/views.py → descargar_ticket` |
+| Registro de usuarios y login | `apps/usuarios/` |
+| Internacionalización español/inglés con selector de idioma | `locale/`, `templates/partials/language_switcher.html` |
+| 6 tests unitarios de lógica de negocio | `apps/reservas/tests.py` |
+| Diagramas de arquitectura (Mermaid) | `docs/ARCHITECTURE.md` |
+| Docker Compose con healthchecks | `docker-compose.yml` |
+| Variables de entorno documentadas | `.env.example` |
 
-## Architecture overview
+### Pendiente ❌ (Issues abiertos en GitHub)
+
+| Funcionalidad | Issue |
+|---------------|-------|
+| Despliegue en la nube (Railway/Render) — 15% de la nota | #10 |
+| Compilar archivos .mo para i18n | #11 |
+| Generación de tickets con código QR | #12 |
+| Páginas de error 404 y 500 personalizadas | #13 |
+| Confirmaciones por correo (SMTP) | #14 |
+| Cobertura de tests al 80%+ | #16 |
+| SEO + robots.txt | #17 |
+
+## Arquitectura
 
 ```
-Browser → Django Views → Services (business logic) → Models → PostgreSQL
-                    ↓
-            TicketGenerator (ABC)
-            ├── UUIDTicketGenerator (production)
-            └── PDFTicketGenerator (stub / future)
+Navegador → Vistas Django → Servicios (lógica de negocio) → Modelos → PostgreSQL
+                       ↓
+               TicketGenerator (ABC)
+               ├── UUIDTicketGenerator (producción)
+               └── PDFTicketGenerator (stub / futuro)
 ```
 
-Key design: **no business logic in views**. Views only handle HTTP (forms, messages, redirects). All business rules live in `services.py` files.
+Principio clave: **ninguna lógica de negocio en las vistas**. Las vistas solo gestionan HTTP (formularios, mensajes, redirecciones). Toda la lógica vive en los archivos `services.py`.
 
-See `docs/ARCHITECTURE.md` for full Mermaid diagrams.
+Consulta `docs/ARCHITECTURE.md` para los diagramas Mermaid completos.
 
-## Quick start (local)
+## Inicio rápido (local)
 
-**Prerequisites:** Docker Desktop running.
+**Requisito:** Docker Desktop en ejecución.
 
 ```bash
-# 1. Clone
+# 1. Clonar
 git clone https://github.com/thomaszambrano/Tickets
 cd Tickets
 
-# 2. Copy env file
+# 2. Copiar archivo de entorno
 cp .env.example .env
-# Edit .env if needed (defaults work for local Docker)
+# Editar .env si es necesario (los valores por defecto funcionan con Docker local)
 
-# 3. Start containers
+# 3. Levantar contenedores
 docker compose up --build -d
 
-# 4. Apply migrations
+# 4. Aplicar migraciones
 docker compose exec web python manage.py migrate
 
-# 5. Load seed data (categories, venues, events, demo user)
+# 5. Cargar datos de prueba (categorías, lugares, eventos, usuario demo)
 docker compose exec -T db psql -U postgres -d ticketsdb < seed_datos_postgres.sql
 
-# 6. Compile translations
+# 6. Compilar traducciones
 docker compose exec web python manage.py compilemessages
 
-# 7. Open the app
-open http://localhost:8000
+# 7. Abrir la aplicación
+http://localhost:8000
 ```
 
-**Demo user:** `demo@vibepas.co` / `demo1234` (from seed data)
+**Usuario demo:** `cliente_demo` / `1234`
 
-**Admin panel:** http://localhost:8000/admin — create a superuser first:
+**Panel de administración:** http://localhost:8000/admin — requiere crear superusuario primero:
 ```bash
 docker compose exec web python manage.py createsuperuser
 ```
 
-## Running tests
+## Ejecutar tests
 
 ```bash
 docker compose exec web python manage.py test
 ```
 
-## Key files
+## Archivos clave
 
-| File | Purpose |
-|------|---------|
-| `apps/reservas/services.py` | Reservation business logic (atomic) |
-| `apps/pagos/services.py` | Payment processing |
-| `apps/reservas/ticket_generator.py` | DIP ticket generation |
-| `apps/reservas/tests.py` | Unit tests |
-| `config/settings.py` | Django settings (env-driven) |
-| `docker-compose.yml` | Local infrastructure |
-| `.env.example` | Required environment variables |
-| `docs/ARCHITECTURE.md` | System architecture diagrams |
-| `seed_datos_postgres.sql` | Demo data |
+| Archivo | Propósito |
+|---------|-----------|
+| `apps/reservas/services.py` | Lógica de reservas (transaccional) |
+| `apps/pagos/services.py` | Procesamiento de pagos |
+| `apps/reservas/ticket_generator.py` | Generación de tickets vía DIP |
+| `apps/reservas/tests.py` | Tests unitarios |
+| `config/settings.py` | Configuración Django (dirigida por variables de entorno) |
+| `docker-compose.yml` | Infraestructura local |
+| `.env.example` | Variables de entorno requeridas |
+| `docs/ARCHITECTURE.md` | Diagramas de arquitectura del sistema |
+| `seed_datos_postgres.sql` | Datos de demostración |
 
-## Git workflow
+## Flujo de trabajo Git
 
 ```bash
-git checkout -b feat/your-feature
-# work...
-git commit -m "feat: description"
-git push origin feat/your-feature
-# open PR against main
+git checkout -b feat/nombre-funcionalidad
+# desarrollar...
+git commit -m "feat: descripción"
+git push origin feat/nombre-funcionalidad
+# abrir PR contra main
 ```
 
-Branch naming: `feat/`, `fix/`, `chore/`, `docs/`
+Nomenclatura de ramas: `feat/`, `fix/`, `chore/`, `docs/`
 
-## Troubleshooting
+## Solución de problemas
 
-**Port 5432 conflict:** PostgreSQL is exposed on **5433**, not 5432. If you have a local PG instance, make sure it's not on 5433.
+**Conflicto en puerto 5432:** PostgreSQL se expone en el puerto **5433**, no 5432. Si tienes una instancia local de PG, asegúrate de que no esté en el 5433.
 
-**Migrations out of sync:** `docker compose exec web python manage.py migrate`
+**Migraciones desincronizadas:** `docker compose exec web python manage.py migrate`
 
-**Language switcher not working:** Run `compilemessages` (see step 6 above).
+**El selector de idioma no funciona:** Ejecuta `compilemessages` (paso 6 del inicio rápido).
 
-**Container not starting:** `docker compose logs web` to see errors.
+**El contenedor no arranca:** `docker compose logs web` para ver los errores.

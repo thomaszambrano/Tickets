@@ -34,6 +34,8 @@ Las dos secciones principales son:
 | **PostgreSQL** | 15 | Base de datos relacional |
 | **psycopg2-binary** | 2.9.11 | Adaptador PostgreSQL para Django |
 | **Pillow** | 10.4.0 | Manejo de imágenes (campo ImageField) |
+| **reportlab** | 4.2.5 | Generación de tickets en PDF |
+| **qrcode[pil]** | 7.4.2 | Generación de códigos QR (pendiente) |
 | **Docker / Docker Compose** | — | Contenedores y orquestación |
 
 ---
@@ -50,23 +52,23 @@ Tickets/
 ├── apps/
 │   ├── usuarios/            # Perfil extendido del usuario
 │   │   ├── models.py
-│   │   ├── admin.py
 │   │   ├── signals.py       # Auto-creación de Perfil al registrar User
 │   │   └── apps.py
 │   ├── eventos/             # Eventos, lugares, categorías y tipos de ticket
 │   │   ├── models.py
+│   │   ├── services.py      # Consultas con select_related/prefetch
 │   │   ├── views.py
-│   │   ├── urls.py
-│   │   └── admin.py
+│   │   └── urls.py
 │   ├── reservas/            # Reservas y tickets generados
 │   │   ├── models.py
+│   │   ├── services.py      # Lógica atómica: crear/cancelar/confirmar
+│   │   ├── ticket_generator.py  # DIP: TicketGenerator ABC + implementaciones
 │   │   ├── views.py
-│   │   ├── urls.py
 │   │   ├── forms.py
-│   │   └── admin.py
-│   └── pagos/               # Registro de pagos asociados a reservas
+│   │   └── tests.py         # 6 tests unitarios
+│   └── pagos/               # Registro de pagos y descarga de tickets PDF
 │       ├── models.py
-│       ├── admin.py
+│       ├── services.py      # procesar_pago @transaction.atomic
 │       └── urls.py
 ├── templates/
 │   ├── base.html            # Plantilla base con navbar y mensajes
@@ -131,6 +133,9 @@ Tickets/
 | GET | `/reservas/mis-reservas/` | `mis_reservas` | Autenticado | Lista de reservas del usuario |
 | GET/POST | `/reservas/crear/<evento_id>/` | `crear_reserva` | Autenticado | Formulario para crear una reserva |
 | POST | `/reservas/cancelar/<reserva_id>/` | `cancelar_reserva` | Autenticado | Cancela una reserva pendiente |
+| GET/POST | `/pagos/pagar/<reserva_id>/` | `pagar` | Autenticado | Formulario de pago |
+| GET | `/pagos/exitoso/<reserva_id>/` | `pago_exitoso` | Autenticado | Confirmación de pago exitoso |
+| GET | `/pagos/ticket/<ticket_id>/pdf/` | `descargar_ticket` | Autenticado | Descarga el ticket en PDF |
 | GET | `/admin/` | — | Staff | Panel de administración |
 
 ---
@@ -156,39 +161,50 @@ Tickets/
     ```
 4.  **Cargar datos de prueba (Seed SQL)**
     El archivo `seed_datos_postgres.sql` contiene datos iniciales (categorías, lugares, eventos, tickets y usuario de prueba).
-    Ejecuta el siguiente comando en la terminal para poblar la base de datos:
     ```bash
     docker compose exec -T db psql -U postgres -d ticketsdb < seed_datos_postgres.sql
     ```
-5.  **Crear superusuario** (Opcional)
+5.  **Compilar traducciones** (necesario para el selector de idioma)
+    ```bash
+    docker compose exec web python manage.py compilemessages
+    ```
+6.  **Ejecutar los tests**
+    ```bash
+    docker compose exec web python manage.py test
+    ```
+7.  **Crear superusuario** (Opcional)
     ```bash
     docker compose exec web python manage.py createsuperuser
     ```
-6.  **Acceder a la aplicación**
+8.  **Acceder a la aplicación**
     | URL | Descripción |
     | :--- | :--- |
     | http://localhost:8000/ | Aplicación principal |
     | http://localhost:8000/admin/ | Panel de administración |
 
-    **Usuario demo (Cliente para probar reservas):**
-    - Usuario: `cliente_demo`
-    - Contraseña: `1234`
+    **Usuario demo:**
+    - Usuario: `cliente_demo` / Contraseña: `1234`
 
 ---
 
 ## Variables de entorno
-Configuradas en `docker-compose.yml`. Para entornos distintos a desarrollo, se recomienda usar un archivo `.env`.
+
+Copia `.env.example` a `.env` y ajusta los valores. Para desarrollo local los valores por defecto funcionan directamente con Docker.
 
 | Variable | Valor por defecto | Descripción |
 | :--- | :--- | :--- |
+| **SECRET_KEY** | (generada) | Clave secreta de Django |
+| **DEBUG** | `True` | Modo depuración (usar `False` en producción) |
+| **ALLOWED_HOSTS** | `localhost,127.0.0.1` | Hosts permitidos |
 | **DB_NAME** | `ticketsdb` | Nombre de la base de datos |
 | **DB_USER** | `postgres` | Usuario de PostgreSQL |
 | **DB_PASSWORD** | `postgres` | Contraseña de PostgreSQL |
 | **DB_HOST** | `db` | Host del servicio de base de datos |
 | **DB_PORT** | `5432` | Puerto de PostgreSQL |
+| **EMAIL_BACKEND** | `console` | Backend de correo (`console` en dev, `smtp` en prod) |
 
 > [!WARNING]
-> En producción reemplaza `SECRET_KEY` in `settings.py` por una clave segura y establece `DEBUG = False`.
+> En producción establece una `SECRET_KEY` segura, `DEBUG=False` y configura `ALLOWED_HOSTS` con tu dominio real.
 
 ---
 
