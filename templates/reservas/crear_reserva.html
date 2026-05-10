@@ -65,10 +65,10 @@
   .booking-wrap {
     max-width: 540px;
     margin: 0 auto;
-    padding: var(--sp-7) var(--sp-5);
+    padding: var(--sp-6) var(--sp-5) var(--sp-5);
   }
   @media (min-width: 768px) {
-    .booking-wrap { padding: var(--sp-7) var(--sp-6); }
+    .booking-wrap { padding: var(--sp-6) var(--sp-6) var(--sp-5); }
   }
 
   .booking-card {
@@ -117,6 +117,8 @@
   }
   .booking-form select:focus,
   .booking-form input[type="number"]:focus { border-color: var(--clr-gold); }
+  .booking-form select option[value=""] { color: var(--clr-muted); }
+  .booking-form select:has(option[value=""]:checked) { color: var(--clr-muted); }
 
   .booking-form .errorlist {
     list-style: none;
@@ -178,7 +180,7 @@
   <div class="booking-card">
     <h2 class="booking-card__title">Selecciona tu pase</h2>
 
-    <form class="booking-form" method="post" novalidate>
+    <form class="booking-form" method="post" novalidate onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').textContent='Procesando...';">
       {% csrf_token %}
 
       {% if form.non_field_errors %}
@@ -207,6 +209,7 @@
         {% if form.cantidad.errors %}
           <ul class="errorlist">{% for e in form.cantidad.errors %}<li>{{ e }}</li>{% endfor %}</ul>
         {% endif %}
+        <span style="font-size:0.75rem;color:var(--clr-muted);margin-top:4px;display:block;">Ingresa un número entre 1 y la disponibilidad del tipo seleccionado.</span>
       </div>
 
       <div class="booking-actions">

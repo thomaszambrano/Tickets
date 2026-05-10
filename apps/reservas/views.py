@@ -1,12 +1,20 @@
 # Autor: Thomas Osorio
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
+import io
+
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 from apps.eventos.models import Evento
-from .models import Reserva
+
+from . import services
 from .forms import ReservaForm
+from .models import Reserva
 
 
 @login_required
@@ -27,22 +35,23 @@ def crear_reserva(request, evento_id):
     if request.method == 'POST':
         form = ReservaForm(request.POST, evento=evento)
         if form.is_valid():
-            reserva = form.save(commit=False)
-            reserva.usuario = request.user
-            reserva.evento = evento
-            reserva.save()
-
-            # Descontar disponibilidad del tipo de ticket
-            tipo = reserva.tipo_ticket
-            tipo.cantidad_disponible -= reserva.cantidad
-            tipo.save()
-
-            return redirect('confirmacion_reserva', reserva_id=reserva.pk)
+            try:
+                reserva = services.crear_reserva(
+                    usuario=request.user,
+                    evento_id=evento.id,
+                    tipo_ticket_id=form.cleaned_data['tipo_ticket'].id,
+                    cantidad=form.cleaned_data['cantidad'],
+                )
+                return redirect('confirmacion_reserva', reserva_id=reserva.pk)
+            except ValidationError as exc:
+                messages.error(request, exc.message)
+                return redirect('crear_reserva', evento_id=evento.id)
+            except Exception:
+                messages.error(request, 'Hubo un error procesando tu reserva. Inténtalo de nuevo.')
+                return redirect('crear_reserva', evento_id=evento.id)
     else:
-        # Pre-seleccionar tipo si viene por querystring (?tipo=<id>)
         initial = {}
-        tipo_id = request.GET.get('tipo')
-        if tipo_id:
+        if tipo_id := request.GET.get('tipo'):
             initial['tipo_ticket'] = tipo_id
         form = ReservaForm(evento=evento, initial=initial)
 
@@ -64,18 +73,49 @@ def cancelar_reserva(request, reserva_id):
     if request.method != 'POST':
         return redirect('mis_reservas')
 
-    reserva = get_object_or_404(Reserva, pk=reserva_id, usuario=request.user)
-
-    if reserva.estado == 'pendiente':
-        # Devolver disponibilidad al tipo de ticket
-        tipo = reserva.tipo_ticket
-        tipo.cantidad_disponible += reserva.cantidad
-        tipo.save()
-
-        reserva.estado = 'cancelada'
-        reserva.save()
+    try:
+        services.cancelar_reserva(reserva_id=reserva_id, usuario=request.user)
         messages.success(request, 'Pase cancelado correctamente.')
-    else:
-        messages.warning(request, 'Solo se pueden cancelar pases en estado pendiente.')
+    except ValidationError as exc:
+        messages.warning(request, exc.message)
 
     return redirect('mis_reservas')
+
+
+@login_required
+def descargar_ticket_pdf(request, reserva_id):
+    reserva = get_object_or_404(
+        Reserva.objects.select_related('evento', 'tipo_ticket', 'evento__lugar'),
+        pk=reserva_id,
+        usuario=request.user,
+    )
+
+    if reserva.estado != 'confirmada':
+        messages.error(request, 'Solo puedes descargar pases confirmados.')
+        return redirect('mis_reservas')
+
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    p.setFont("Helvetica-Bold", 24)
+    p.drawString(100, 700, "VIBEPAS - Ticket de Entrada")
+
+    p.setFont("Helvetica", 14)
+    p.drawString(100, 650, f"Evento: {reserva.evento.nombre}")
+    p.drawString(100, 620, f"Lugar: {reserva.evento.lugar.nombre}")
+    p.drawString(100, 590, f"Fecha: {reserva.evento.fecha} a las {reserva.evento.hora}")
+    p.drawString(100, 560, f"Tipo de Pase: {reserva.tipo_ticket.nombre}")
+    p.drawString(100, 530, f"Cantidad: {reserva.cantidad}")
+
+    nombre_titular = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
+    p.drawString(100, 500, f"Titular: {nombre_titular}")
+
+    p.setFont("Helvetica-Oblique", 12)
+    p.drawString(100, 450, f"Reserva #{reserva.id} - ¡Rock on!")
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="vibepas_ticket_{reserva.id}.pdf"'
+    return response

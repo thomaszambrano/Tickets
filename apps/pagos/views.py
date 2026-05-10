@@ -1,11 +1,15 @@
 # Autor: Thomas Osorio
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.reservas.models import Reserva
-from .models import Pago
+
+from . import services
 
 
 @login_required
@@ -16,12 +20,10 @@ def pagar(request, reserva_id):
         usuario=request.user,
     )
 
-    # Only pending reservations can be paid
     if reserva.estado != 'pendiente':
         messages.warning(request, 'Este pase no puede ser pagado.')
         return redirect('mis_reservas')
 
-    # Already has a payment — redirect to success
     if hasattr(reserva, 'pago') and reserva.pago.estado == 'aprobado':
         return redirect('pago_exitoso', reserva_id=reserva_id)
 
@@ -29,29 +31,30 @@ def pagar(request, reserva_id):
 
     if request.method == 'POST':
         metodo = request.POST.get('metodo')
-        if metodo not in ('tarjeta', 'pse', 'efectivo'):
-            messages.error(request, 'Seleccioná un método de pago válido.')
-        else:
-            pago, created = Pago.objects.get_or_create(
-                reserva=reserva,
-                defaults={'metodo': metodo, 'monto': monto},
+        try:
+            pago, _ = services.procesar_pago(
+                reserva_id=reserva_id,
+                metodo=metodo,
+                usuario=request.user,
             )
-            if not created:
-                pago.metodo = metodo
-                pago.monto = monto
-
-            pago.estado = 'aprobado'
-            pago.save()
-
-            reserva.estado = 'confirmada'
-            reserva.save()
-
+            if reserva.usuario.email:
+                send_mail(
+                    f'Pase Confirmado: {reserva.evento.nombre}',
+                    (
+                        f'Hola {reserva.usuario.username},\n\n'
+                        f'Tu pago de ${pago.monto} ha sido aprobado.\n'
+                        'Ya puedes ver o descargar tu pase desde "Mis Pases".\n\n'
+                        '¡Rock on!'
+                    ),
+                    getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vibepas.com'),
+                    [reserva.usuario.email],
+                    fail_silently=True,
+                )
             return redirect('pago_exitoso', reserva_id=reserva_id)
+        except ValidationError as exc:
+            messages.error(request, exc.message)
 
-    return render(request, 'pagos/pagar.html', {
-        'reserva': reserva,
-        'monto': monto,
-    })
+    return render(request, 'pagos/pagar.html', {'reserva': reserva, 'monto': monto})
 
 
 @login_required

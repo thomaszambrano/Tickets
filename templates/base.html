@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+{% load i18n %}{% get_current_language as cur_lang %}<html lang="{{ cur_lang }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -621,6 +621,7 @@
     </nav>
 
     <div class="navbar__actions">
+      {% include "partials/language_switcher.html" %}
       {% if user.is_authenticated %}
         <span class="navbar__user">{{ user.username }}</span>
         <form method="post" action="{% url 'logout' %}">
@@ -737,5 +738,19 @@
   </nav>
 
   {% block extra_js %}{% endblock %}
+  <script>
+    // Auto-dismiss messages after 4 seconds
+    document.addEventListener('DOMContentLoaded', () => {
+      const messages = document.querySelectorAll('.msg');
+      messages.forEach(msg => {
+        setTimeout(() => {
+          msg.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          msg.style.opacity = '0';
+          msg.style.transform = 'translateY(-10px)';
+          setTimeout(() => msg.remove(), 400); // Wait for transition
+        }, 4000);
+      });
+    });
+  </script>
 </body>
 </html>

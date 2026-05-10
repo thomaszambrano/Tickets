@@ -1,5 +1,6 @@
 # Autor: Thomas Osorio
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 from apps.eventos.models import Evento, TipoTicket
@@ -17,6 +18,14 @@ class Reserva(models.Model):
     cantidad = models.PositiveIntegerField()
     fecha_reserva = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
+
+    def clean(self):
+        if self.cantidad and self.tipo_ticket_id:
+            tipo = self.tipo_ticket
+            if self.cantidad > tipo.cantidad_disponible:
+                raise ValidationError(
+                    f'Solo hay {tipo.cantidad_disponible} disponibles'
+                )
 
     def __str__(self):
         return f"Reserva #{self.id} - {self.usuario.username}"
