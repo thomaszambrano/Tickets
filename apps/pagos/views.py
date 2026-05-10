@@ -1,13 +1,15 @@
-# Autor: Thomas Osorio
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from apps.reservas.models import Reserva
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+
+from apps.reservas.models import Reserva, Ticket
 
 from . import services
 
@@ -65,3 +67,37 @@ def pago_exitoso(request, reserva_id):
         usuario=request.user,
     )
     return render(request, 'pagos/pago_exitoso.html', {'reserva': reserva})
+
+
+@login_required
+def descargar_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, pk=ticket_id, reserva__usuario=request.user)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="ticket_{ticket.codigo}.pdf"'
+
+    p = canvas.Canvas(response, pagesize=A4)
+    ancho, alto = A4
+
+    p.setFont('Helvetica-Bold', 20)
+    p.drawCentredString(ancho / 2, alto - 80, 'VibePas — Tu Entrada')
+    p.setFont('Helvetica', 12)
+    p.drawCentredString(ancho / 2, alto - 110, 'Presenta este código en la entrada del evento')
+    p.line(50, alto - 125, ancho - 50, alto - 125)
+
+    for label, value, y in [
+        ('Evento:', ticket.reserva.evento.nombre, alto - 160),
+        ('Tipo:', ticket.reserva.tipo_ticket.nombre, alto - 190),
+        ('Titular:', ticket.reserva.usuario.username, alto - 220),
+        ('Precio:', f'${ticket.precio_final}', alto - 250),
+        ('Código:', ticket.codigo, alto - 280),
+    ]:
+        p.setFont('Helvetica-Bold', 13)
+        p.drawString(60, y, label)
+        p.setFont('Helvetica', 13)
+        p.drawString(160, y, str(value))
+
+    p.line(50, alto - 300, ancho - 50, alto - 300)
+    p.showPage()
+    p.save()
+    return response
