@@ -201,10 +201,68 @@ Copia `.env.example` a `.env` y ajusta los valores. Para desarrollo local los va
 | **DB_PASSWORD** | `postgres` | Contraseña de PostgreSQL |
 | **DB_HOST** | `db` | Host del servicio de base de datos |
 | **DB_PORT** | `5432` | Puerto de PostgreSQL |
-| **EMAIL_BACKEND** | `console` | Backend de correo (`console` en dev, `smtp` en prod) |
+| **EMAIL_BACKEND** | `console.EmailBackend` | Backend de correo (`console` en dev, `smtp.EmailBackend` en prod) |
+| **EMAIL_HOST** | _(vacío)_ | Servidor SMTP (ej. `smtp.gmail.com`, `smtp.mailtrap.io`) |
+| **EMAIL_PORT** | `587` | Puerto SMTP (587 para TLS, 465 para SSL) |
+| **EMAIL_USE_TLS** | `True` | Activar TLS en la conexión SMTP |
+| **EMAIL_HOST_USER** | _(vacío)_ | Usuario/dirección del remitente SMTP |
+| **EMAIL_HOST_PASSWORD** | _(vacío)_ | Contraseña o App Password del remitente |
+| **DEFAULT_FROM_EMAIL** | `noreply@vibepas.com` | Dirección "De:" en los correos enviados |
 
 > [!WARNING]
 > En producción establece una `SECRET_KEY` segura, `DEBUG=False` y configura `ALLOWED_HOSTS` con tu dominio real.
+> Con `DEBUG=False` Django renderiza las plantillas `templates/404.html` y `templates/500.html` personalizadas.
+
+---
+
+## Configuración de correo (SMTP)
+
+El sistema envía dos tipos de correo automáticamente:
+- **Confirmación de reserva** — al completar el pago exitosamente (`apps/pagos/services.py`)
+- **Cancelación de reserva** — al cancelar una reserva (`apps/reservas/services.py`)
+
+### Desarrollo (consola)
+
+Por defecto los correos se imprimen en la consola del servidor. No requiere configuración adicional.
+
+```env
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+```
+
+### Producción con Gmail
+
+1. Activa la verificación en dos pasos en tu cuenta Google.
+2. Genera una **App Password** en [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
+3. Configura en tu `.env`:
+
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=tu@gmail.com
+EMAIL_HOST_PASSWORD=tu-app-password-de-16-chars
+DEFAULT_FROM_EMAIL=noreply@vibepas.com
+```
+
+### Producción con Mailtrap (pruebas)
+
+Mailtrap permite capturar correos en staging sin enviarlos realmente. Obtén las credenciales en tu bandeja Mailtrap:
+
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.mailtrap.io
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=<mailtrap-user>
+EMAIL_HOST_PASSWORD=<mailtrap-password>
+DEFAULT_FROM_EMAIL=noreply@vibepas.com
+```
+
+> [!NOTE]
+> Las plantillas de correo se encuentran en `templates/emails/`:
+> - `reserva_confirmada.html` / `reserva_confirmada.txt`
+> - `reserva_cancelada.html` / `reserva_cancelada.txt`
 
 ---
 

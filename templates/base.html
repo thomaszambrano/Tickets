@@ -6,6 +6,18 @@
   <title>{% block title %}VIBEPAS — Rock Music Events{% endblock %}</title>
   {% load static %}
 
+  <!-- SEO meta tags -->
+  <meta name="description" content="{% block meta_description %}VIBEPAS — Tu plataforma de tickets para eventos de rock en vivo. Encuentra los mejores conciertos y asegura tu lugar.{% endblock %}">
+
+  <!-- Open Graph -->
+  {% block og_tags %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="VIBEPAS">
+  <meta property="og:title" content="{% block og_title %}VIBEPAS — Rock Music Events{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Tu plataforma de tickets para eventos de rock en vivo.{% endblock %}">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  {% endblock %}
+
   <!-- Fonts: Barlow Condensed (display) + Barlow (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from apps.reservas.models import Reserva
 from apps.reservas import services as reserva_services
 from .models import Pago
+from .email_utils import enviar_confirmacion
 
 
 METODOS_VALIDOS = {'tarjeta', 'pse', 'efectivo'}
@@ -38,5 +39,7 @@ def procesar_pago(reserva_id, metodo, usuario):
 
     reserva_services.confirmar_reserva(reserva)
     tickets = reserva_services.generar_tickets(reserva)
+
+    enviar_confirmacion(reserva, pago)
 
     return pago, tickets

@@ -1,6 +1,20 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block title %}{{ evento.nombre }} — VIBEPAS{% endblock %}
+
+{% block meta_description %}{{ evento.descripcion|truncatechars:160 }}{% endblock %}
+
+{% block og_tags %}
+<meta property="og:type" content="event">
+<meta property="og:site_name" content="VIBEPAS">
+<meta property="og:title" content="{{ evento.nombre }} — VIBEPAS">
+<meta property="og:description" content="{{ evento.descripcion|truncatechars:160 }}">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+{% if evento.imagen %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ evento.imagen.url }}">
+{% endif %}
+{% endblock %}
 
 {% block extra_css %}
   /* ========================

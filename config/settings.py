@@ -24,8 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-024arm@gdv+o7155nl@0db(_owa#1l1@2iwvc%)2_*)4#cur67')
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# Set DEBUG=False in production via environment variable.
+# Django only renders custom 404/500 templates (templates/404.html, templates/500.html)
+# when DEBUG=False. With DEBUG=True the default technical error page is shown instead.
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
+# In production, set ALLOWED_HOSTS to your actual domain, e.g. "vibepas.com,www.vibepas.com".
+# This is also required for custom error pages to render correctly.
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
@@ -42,6 +47,7 @@ INSTALLED_APPS = [
     'apps.eventos',
     'apps.reservas',
     'apps.pagos',
+    'django.contrib.sitemaps',
 ]
 
 MIDDLEWARE = [

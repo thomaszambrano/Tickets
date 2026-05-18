@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from apps.eventos.models import TipoTicket
 from .models import Reserva
 from .ticket_generator import UUIDTicketGenerator
+from apps.pagos.email_utils import enviar_cancelacion
 
 
 _generator = UUIDTicketGenerator()
@@ -48,6 +49,7 @@ def cancelar_reserva(reserva_id, usuario):
     )
     reserva.estado = 'cancelada'
     reserva.save(update_fields=['estado'])
+    enviar_cancelacion(reserva)
     return reserva
 
 
